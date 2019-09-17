@@ -1,12 +1,14 @@
 -module(cbor).
 
--export([decode/1, encode/1]).
+-export([decode/1, encode/1, encode_string/1]).
 
 % encoder
 -define(MAX_8BYTE, 16#ffffffffffffffff).
 -define(MAX_4BYTE, 16#ffffffff).
 -define(MAX_2BYTE, 16#ffff).
 -define(MAX_1BYTE, 16#ff).
+
+
 
 encode(false) -> <<16#f4>>;
 encode(true) -> <<16#f5>>;
@@ -26,6 +28,13 @@ encode({timetext, Data}) -> encode({tag, 0, Data});
 encode({timeepoch, Data}) -> encode({tag, 1, Data});
 encode({simple, N}) -> encode_simple(N);
 encode(Term) -> throw({invalid, Term}).
+encode_string (StringToEncode) -> lists:append(encode_string_helper(lists:flatlength(StringToEncode)), StringToEncode).
+
+encode_string_helper (Value) when Value < 24 -> [16#60 bor Value];
+encode_string_helper (Value) when Value =< ?MAX_1BYTE   -> lists:append([16#60 bor 2#00011000], binary_to_list(binary:encode_unsigned(Value)));
+encode_string_helper (Value) when Value =< ?MAX_2BYTE   -> lists:append([16#60 bor 2#00011001], binary_to_list(binary:encode_unsigned(Value)));
+encode_string_helper (Value) when Value =< ?MAX_4BYTE  -> lists:append([16#60 bor 2#00011010], binary_to_list(binary:encode_unsigned(Value)));
+encode_string_helper (Value) when Value =< ?MAX_8BYTE  -> lists:append( [16#60 bor 2#00011011], binary_to_list(binary:encode_unsigned(Value)) ).
 
 encode_float(Float) when is_float(Float) -> <<16#fb, Float:64/float>>. % TODO: add canonical impl
 
@@ -411,3 +420,8 @@ bench_test() ->
 
 repeat_decode_n(0, _) -> ok;
 repeat_decode_n(N, Bin) -> decode(Bin), repeat_decode_n(N-1, Bin).
+
+% encode_all([H|T], Out) -> 
+%     Size = lists:flatlength(T),
+%     if Size == 0 -> list_to_binary( lists:append(Out, H) );
+%     true -> encode_all( T, lists:append(Out, H) ) .
