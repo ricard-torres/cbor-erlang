@@ -28,7 +28,7 @@ encode({timetext, Data}) -> encode({tag, 0, Data});
 encode({timeepoch, Data}) -> encode({tag, 1, Data});
 encode({simple, N}) -> encode_simple(N);
 encode(Term) -> throw({invalid, Term}).
-encode_string (StringToEncode) -> lists:append(encode_string_helper(lists:flatlength(StringToEncode)), StringToEncode).
+encode_string (StringToEncode) -> list_to_binary(lists:append(encode_string_helper(lists:flatlength(StringToEncode)), StringToEncode)).
 
 encode_string_helper (Value) when Value < 24 -> [16#60 bor Value];
 encode_string_helper (Value) when Value =< ?MAX_1BYTE   -> lists:append([16#60 bor 2#00011000], binary_to_list(binary:encode_unsigned(Value)));
