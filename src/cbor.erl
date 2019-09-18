@@ -1,6 +1,6 @@
 -module(cbor).
 
--export([decode/1, encode/1, encode_string/1]).
+-export([decode/1, encode/1, encode_string/1, header_info/1]).
 
 % encoder
 -define(MAX_8BYTE, 16#ffffffffffffffff).
@@ -85,7 +85,10 @@ encode_simple(N) when N =< ?MAX_1BYTE -> <<16#f8, N>>.
 decode(List) when is_list(List) ->
     decode(hexstr_to_bin(List));
 decode(Data) ->
-    build(tokenize(Data, [])).
+    io:fwrite("(88)Tokenizing data~n"),
+    Tokens = tokenize(Data, []),
+    io:fwrite("(90)~p~n", [Tokens]),
+    build(Tokens).
 
 -define(TK(N, EXPR), tokenize(<<N, T/binary>>,Acc) -> EXPR).
 -define(TK_ITEM(N, ITEM), ?TK(N, tokenize(T, [(ITEM)|Acc]))).
@@ -186,12 +189,14 @@ build(Tokens) -> build(Tokens, []).
 
 % handle indefinite-length items
 build([break | Tail], Acc) ->
+    io:fwrite("(192)Entered here~n"),
     {Item, Tail2} = build(Tail, []),
+    io:fwrite("(194) Do I pass here?~n"),
     build(Tail2, [Item | Acc]);
 
 build([listb | Tail], Acc) -> {Acc, Tail};
 build([strb | Tail], Acc) -> {iolist_to_binary(Acc), Tail};
-build([mapb | Tail], Acc) -> {build_map(Acc), Tail};
+build([mapb | Tail], Acc) -> io:fwrite("(199)To build-> ~p~n", [Acc]), {build_map(Acc), Tail};
 
 % handle fixed-length items
 build([{list, N} | Tail], Acc) ->
@@ -222,7 +227,8 @@ build([], [Item]) -> Item;
 
 build(Tokens, Stacks) -> throw({invalid, Tokens, Stacks}).
 
-build_map(List) -> build_map(List, []).
+build_map(List) -> io:fwrite("(230) Here -> ~p~n", [List] ), build_map(List, []).
+build_map([H|T], Acc) -> build_map(T, [{2, H} | Acc]);
 build_map([K, V | Tail], Acc) -> build_map(Tail, [{K, V} | Acc]);
 build_map([], Acc) -> maps:from_list(Acc).
 
@@ -420,6 +426,13 @@ bench_test() ->
 
 repeat_decode_n(0, _) -> ok;
 repeat_decode_n(N, Bin) -> decode(Bin), repeat_decode_n(N-1, Bin).
+
+header_info(<<H, _/binary>>) ->
+    case H band 16#e0 of
+        16#40 ->
+            H band 16#1f;
+        _ -> H
+    end.
 
 % encode_all([H|T], Out) -> 
 %     Size = lists:flatlength(T),
