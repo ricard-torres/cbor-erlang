@@ -427,10 +427,10 @@ bench_test() ->
 repeat_decode_n(0, _) -> ok;
 repeat_decode_n(N, Bin) -> decode(Bin), repeat_decode_n(N-1, Bin).
 
-header_info(<<H, _/binary>>) ->
+header_info(H) ->
     case H band 16#e0 of
         16#40 ->
-            H band 16#1f;
+            {byte_string, H band 16#1f};
         _ -> H
     end.
 
