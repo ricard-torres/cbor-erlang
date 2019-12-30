@@ -2,6 +2,7 @@
 
 -export([decode/1, encode/1, encode_string/1, header_info/1]).
 
+
 % encoder
 -define(MAX_8BYTE, 16#ffffffffffffffff).
 -define(MAX_4BYTE, 16#ffffffff).
