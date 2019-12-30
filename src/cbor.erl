@@ -2,9 +2,11 @@
 
 -export([decode/1, encode/1, encode_string/1, header_info/1]).
 
-REDIX IS BETTERRRRRRRR!!!!!!!!
-
-
+ % encoder
+ -define(MAX_8BYTE, 16#ffffffffffffffff).
+ -define(MAX_4BYTE, 16#ffffffff).
+ -define(MAX_2BYTE, 16#ffff).
+ -define(MAX_1BYTE, 16#ff).
 
 encode(false) -> <<16#f4>>;
 encode(true) -> <<16#f5>>;
